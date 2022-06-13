@@ -45,8 +45,8 @@ from utils.general import (LOGGER, check_file, check_img_size, check_imshow, che
                            increment_path, non_max_suppression, print_args, scale_coords, strip_optimizer, xyxy2xywh)
 from utils.plots import Annotator, colors, save_one_box
 from utils.torch_utils import select_device, time_sync
-from deep_sort.utils.parser import get_config
-from deep_sort.deep_sort import DeepSort
+
+from deepSORT_func import deepSORT
 
 @torch.no_grad()
 def run(weights=ROOT / 'yolov5s.pt',  # model.pt path(s)
@@ -110,6 +110,8 @@ def run(weights=ROOT / 'yolov5s.pt',  # model.pt path(s)
         bs = 1  # batch_size
     vid_path, vid_writer = [None] * bs, [None] * bs
 
+    #DeepSORT
+    DS = deepSORT(device, names)
     # Run inference
     model.warmup(imgsz=(1, 3, *imgsz), half=half)  # warmup
     dt, seen = [0.0, 0.0, 0.0], 0
@@ -130,14 +132,15 @@ def run(weights=ROOT / 'yolov5s.pt',  # model.pt path(s)
         dt[1] += t3 - t2
 
         # NMS
+        pred_lc = non_max_suppression(pred, 0.1, iou_thres, classes, agnostic_nms, max_det=max_det)
         pred = non_max_suppression(pred, conf_thres, iou_thres, classes, agnostic_nms, max_det=max_det)
         dt[2] += time_sync() - t3
 
         # Second-stage classifier (optional)
         # pred = utils.general.apply_classifier(pred, classifier_model, im, im0s)
-
+        
         # Process predictions
-        for i, det in enumerate(pred):  # per image
+        for i, (det,det_lc) in enumerate(zip(pred,pred_lc)):  # per image
             seen += 1
             if webcam:  # batch_size >= 1
                 p, im0, frame = path[i], im0s[i].copy(), dataset.count
@@ -151,6 +154,7 @@ def run(weights=ROOT / 'yolov5s.pt',  # model.pt path(s)
             s += '%gx%g ' % im.shape[2:]  # print string
             gn = torch.tensor(im0.shape)[[1, 0, 1, 0]]  # normalization gain whwh
             imc = im0.copy() if save_crop else im0  # for save_crop
+            imds = im0.copy()  # for deepSORT
             annotator = Annotator(im0, line_width=line_thickness, example=str(names))
             if len(det):
                 # Rescale boxes from img_size to im0 size
@@ -160,6 +164,9 @@ def run(weights=ROOT / 'yolov5s.pt',  # model.pt path(s)
                 for c in det[:, -1].unique():
                     n = (det[:, -1] == c).sum()  # detections per class
                     s += f"{n} {names[int(c)]}{'s' * (n > 1)}, "  # add to string
+                
+                #Apply DeepSORT
+                # t_confirm, t_missed, t_new, im1 = DS.update(det, det_lc, imds, verbose=1)
 
                 # Write results
                 for *xyxy, conf, cls in reversed(det):
@@ -179,14 +186,22 @@ def run(weights=ROOT / 'yolov5s.pt',  # model.pt path(s)
                         size = abs(int(xyxy[0])-int(xyxy[2])), abs(int(xyxy[1]) - int(xyxy[3]))
                         if size[0] > min_size and size[1] > min_size and save_crop:
                             save_one_box(xyxy, imc, file=save_dir / 'crops' / names[c] / f'{p.stem}.jpg', BGR=True)
-
+            else:
+                DS.deepsort.increment_ages()
+                LOGGER.info('No detections')
+       
             # Print time (inference-only)
             LOGGER.info(f'{s}Done. ({t3 - t2:.3f}s)')
 
             # Stream results
-            im0 = annotator.result()
+            # im0 = annotator.result()
             if view_img:
+                # imsiz = 1300
+                # if im1.shape[1] > imsiz:
+                #     ww,hh = int( im1.shape[0]* (imsiz/im1.shape[1])), int( im1.shape[1]* (imsiz/im1.shape[1]))
+                #     resized = cv2.resize(im1, (hh,ww))
                 cv2.imshow(str(p), im0)
+                # cv2.imshow("Output", resized)
                 cv2.waitKey(1)  # 1 millisecond
 
             # Save results (image with detections)

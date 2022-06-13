@@ -254,3 +254,5 @@ com_crashlytics_export_strings.xml
 crashlytics.properties
 crashlytics-build.properties
 fabric.properties
+
+# deep_sort/deep/checkpoint/resnet50_MSMT17.pth
