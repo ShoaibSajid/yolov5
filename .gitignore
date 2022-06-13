@@ -255,4 +255,5 @@ crashlytics.properties
 crashlytics-build.properties
 fabric.properties
 
-# deep_sort/deep/checkpoint/resnet50_MSMT17.pth
+deep_sort/deep/checkpoint/resnet50_MSMT17.pth
+best.pt
