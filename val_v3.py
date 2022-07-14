@@ -362,7 +362,7 @@ def run2(data,
     save_dir = increment_path(Path(project) / name, exist_ok=exist_ok)  # increment run
 
     # Names
-    name_f = "/data/datasets/0_Scripts/bdd.names"
+    name_f = "./bdd.names"
     names = {k: v for k, v in enumerate(open(name_f).read().splitlines())}
 
     # Configure
