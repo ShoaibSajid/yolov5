@@ -8,10 +8,10 @@
 
 
 # Train/val/test sets as 1) dir: path/to/imgs, 2) file: path/to/imgs.txt, or 3) list: [path/to/imgs1, path/to/imgs2, ..]
-path:   /home/shoaib/datasets/HCK/5_HACKATHON/ # dataset root dir
-train:  /home/shoaib/datasets/HCK/5_HACKATHON/train_labels_list.txt
-val:    /home/shoaib/datasets/HCK/5_HACKATHON/train_labels_list.txt 
-test:   /home/shoaib/datasets/HCK/5_HACKATHON/train_labels_list.txt 
+path:   /home/shoaib/datasets/HCK/ # dataset root dir
+train:  /home/shoaib/datasets/HCK/train_SegAug_black.txt
+val:    /home/shoaib/datasets/HCK/val_org.txt 
+test:   /home/shoaib/datasets/HCK/val_org.txt 
 
 # Classes
 nc: 13  # number of classes
