@@ -29,8 +29,13 @@ import torch
 import torchvision
 import yaml
 
-from utils.downloads import gsutil_getsize
-from utils.metrics import box_iou, fitness
+try:
+    from utils.downloads import gsutil_getsize
+    from utils.metrics import box_iou, fitness
+except:
+    from yolov5.utils.downloads import gsutil_getsize
+    from yolov5.utils.metrics import box_iou, fitness
+    
 
 # Settings
 FILE = Path(__file__).resolve()
