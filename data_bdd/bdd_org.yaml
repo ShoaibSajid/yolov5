@@ -8,10 +8,10 @@
 
 
 # Train/val/test sets as 1) dir: path/to/imgs, 2) file: path/to/imgs.txt, or 3) list: [path/to/imgs1, path/to/imgs2, ..]
-path:   /home/shoaib/datasets/BDD_100k # dataset root dir
-train:  /home/shoaib/datasets/BDD_100k/train_list.txt
-val:    /home/shoaib/datasets/BDD_100k/val_list.txt
-test:   /home/shoaib/datasets/BDD_100k/val_list.txt
+path:   /home/shoaib/datasets/BDD/BDD_100k # dataset root dir
+train:  /home/shoaib/datasets/BDD/BDD_100k/train_list.txt
+val:    /home/shoaib/datasets/BDD/BDD_100k/val_list.txt
+test:   /home/shoaib/datasets/BDD/BDD_100k/val_list.txt
 
 # Classes
 nc: 13  # number of classes

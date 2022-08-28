@@ -121,6 +121,7 @@ def train(hyp,  # path/to/hyp.yaml or hyp dictionary
         with torch_distributed_zero_first(LOCAL_RANK):
             weights = attempt_download(weights)  # download if not found locally
         ckpt = torch.load(weights, map_location=device)  # load checkpoint
+        print(colorstr("bright_green",f"Loading weights from ------- {weights}"))
         model = Model(cfg or ckpt['model'].yaml, ch=3, nc=nc, anchors=hyp.get('anchors')).to(device)  # create
         exclude = ['anchor'] if (cfg or hyp.get('anchors')) and not resume else []  # exclude keys
         csd = ckpt['model'].float().state_dict()  # checkpoint state_dict as FP32
@@ -201,10 +202,11 @@ def train(hyp,  # path/to/hyp.yaml or hyp dictionary
         # Epochs
         if opt.start_epoch:
             start_epoch = opt.start_epoch
+            print(colorstr("bright_green",f"Loading weights from --------------- from opt.start_epoch ----------------- {start_epoch}"))
         else:
             start_epoch = ckpt['epoch'] + 1
+            print(colorstr("bright_green",f"Loading weights from --------------- from checkpoint's epoch -------------- {start_epoch}"))
 
-        print(f"Start EPOCH ----------------------------- {start_epoch}")
         # start_epoch = 100
         # if resume:
             # assert start_epoch > 0, f'{weights} training to {epochs} epochs is finished, nothing to resume.'
@@ -519,7 +521,7 @@ def main(opt, callbacks=Callbacks()):
         opt.cfg, opt.weights, opt.resume = '', ckpt, True  # reinstate
         LOGGER.info(f'Resuming training from {ckpt}')
     else:
-        print(f"-------- Running without loading opt from previous run")
+        print(colorstr("bright_green","-------- Running without loading opt from previous run"))
         opt.data, opt.cfg, opt.hyp, opt.weights, opt.project = \
             check_file(opt.data), check_yaml(opt.cfg), check_yaml(opt.hyp), str(opt.weights), str(opt.project)  # checks
         assert len(opt.cfg) or len(opt.weights), 'either --cfg or --weights must be specified'
