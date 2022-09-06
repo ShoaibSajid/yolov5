@@ -28,20 +28,14 @@ import pkg_resources as pkg
 import torch
 import torchvision
 import yaml
-<<<<<<< HEAD
-=======
 
->>>>>>> 62858da9056771474f60f94f927afa9be0f3e5e1
 try:
     from utils.downloads import gsutil_getsize
     from utils.metrics import box_iou, fitness
 except:
     from yolov5.utils.downloads import gsutil_getsize
     from yolov5.utils.metrics import box_iou, fitness
-<<<<<<< HEAD
-=======
-    
->>>>>>> 62858da9056771474f60f94f927afa9be0f3e5e1
+
 
 # Settings
 FILE = Path(__file__).resolve()

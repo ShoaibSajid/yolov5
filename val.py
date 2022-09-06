@@ -67,6 +67,46 @@ def save_one_json(predn, jdict, path, class_map):
                       'bbox': [round(x, 3) for x in b],
                       'score': round(p[4], 5)})
 
+def clean_predictions(predn):
+
+    W,H,AR = 20,20,3
+    _predn = []
+    discarded = 0
+    clean = 0
+    for i,obj in enumerate(predn):
+        x1, y1, x2, y2, conf, cls = obj
+        w, h = x2-x1, y2-y1
+        c1 = w<W
+        c2 = h<H
+        c3 = (w/h)>AR or (h/w)>AR 
+        if c1 or c2 or c3:
+            discarded+=1
+        else:
+            _predn.append(obj.cpu().detach().numpy()) #append
+            clean+=1
+
+    return discarded, clean, torch.from_numpy(np.array(_predn)).to(predn.device)
+
+
+def clean_gt(labels):
+
+    W,H,AR = 20,20,3
+    _labels = []
+    discarded = 0
+    clean = 0
+    for i,obj in enumerate(labels):
+        x1, y1, w, h = obj[1:5]
+        c1 = w<W
+        c2 = h<H
+        c3 = (w/h)>AR or (h/w)>AR 
+        if c1 or c2 or c3:
+            discarded+=1
+        else:
+            _labels.append(obj.cpu().detach().numpy()) #append
+            clean+=1
+
+    return discarded, clean, torch.from_numpy(np.array(_labels)).to(labels.device)
+
 
 def process_batch(detections, labels, iouv):
     """
@@ -120,6 +160,7 @@ def run(data,
         plots=True,
         callbacks=Callbacks(),
         compute_loss=None,
+        clean_labels=False,
         ):
     # Initialize/load model and set device
     training = model is not None
@@ -152,6 +193,11 @@ def run(data,
 
         # Data
         data = check_dataset(data)  # check
+
+    total_discarded, total_discarded_gt = 0, 0
+    total_clean, total_clean_gt = 0, 0
+    total_boxes = 0
+    total_gt = 0
 
     # Configure
     model.eval()
@@ -205,7 +251,12 @@ def run(data,
 
         # Metrics
         for si, pred in enumerate(out):
+            
             labels = targets[targets[:, 0] == si, 1:]
+
+            total_boxes+=len(pred) #my variables
+            total_gt+=len(labels) #my variables
+
             nl = len(labels)
             tcls = labels[:, 0].tolist() if nl else []  # target class
             path, shape = Path(paths[si]), shapes[si][0]
@@ -220,19 +271,30 @@ def run(data,
             if single_cls:
                 pred[:, 5] = 0
             predn = pred.clone()
+
             scale_coords(im[si].shape[1:], predn[:, :4], shape, shapes[si][1])  # native-space pred
+
+            # if clean_labels: _discarded, _cleaned, pred  = clean_predictions(pred )
+            if clean_labels:  discarded,  cleaned, predn = clean_predictions(predn)
+            if clean_labels: total_discarded+=discarded
+            if clean_labels: total_clean+=cleaned
+
+            if clean_labels:  gt_discarded,  gt_cleaned, gt_labels = clean_gt(labels)
+            if clean_labels: total_discarded_gt+=gt_discarded
+            if clean_labels: total_clean_gt+=gt_cleaned
 
             # Evaluate
             if nl:
                 tbox = xywh2xyxy(labels[:, 1:5])  # target boxes
                 scale_coords(im[si].shape[1:], tbox, shape, shapes[si][1])  # native-space labels
-                labelsn = torch.cat((labels[:, 0:1], tbox), 1)  # native-space labels
+                labelsn = torch.cat((labels[:, 0:1], tbox), 1)  # native-space labels\
                 correct = process_batch(predn, labelsn, iouv)
                 if plots:
                     confusion_matrix.process_batch(predn, labelsn)
             else:
-                correct = torch.zeros(pred.shape[0], niou, dtype=torch.bool)
-            stats.append((correct.cpu(), pred[:, 4].cpu(), pred[:, 5].cpu(), tcls))  # (correct, conf, pcls, tcls)
+                correct = torch.zeros(predn.shape[0], niou, dtype=torch.bool)
+            # stats.append((correct.cpu(), pred[:, 4].cpu(), pred[:, 5].cpu(), tcls))  # (correct, conf, pcls, tcls) Change this line
+            stats.append((correct.cpu(), predn[:, 4].cpu(), predn[:, 5].cpu(), tcls))  # (correct, conf, pcls, tcls)
 
             # Save/log
             if save_txt:
@@ -257,6 +319,7 @@ def run(data,
         nt = np.bincount(stats[3].astype(np.int64), minlength=nc)  # number of targets per class
     else:
         nt = torch.zeros(1)
+
 
     # Print results
     pf = '%20s' + '%11i' * 2 + '%11.3g' * 4  # print format
@@ -304,6 +367,16 @@ def run(data,
         except Exception as e:
             LOGGER.info(f'pycocotools unable to run: {e}')
 
+
+    LOGGER.info(f"Total Ground Truth Boxes         : {total_gt}")
+    if clean_labels: LOGGER.info(f"Total Ground Truth boxes discard by cleaning: {total_discarded_gt}")
+
+    LOGGER.info(f"Total Predicted Boxes            : {total_boxes}")
+    if clean_labels: LOGGER.info(f"Total Prediction boxes discarded by cleaning: {total_discarded}")
+    
+    if clean_labels: LOGGER.info(f"Total clean prediction boxes written        : {total_clean}")
+
+
     # Return results
     model.float()  # for training
     if not training:
@@ -336,6 +409,7 @@ def parse_opt():
     parser.add_argument('--project', default=ROOT / 'runs/val', help='save to project/name')
     parser.add_argument('--name', default='exp', help='save to project/name')
     parser.add_argument('--exist-ok', action='store_true', help='existing project/name ok, do not increment')
+    parser.add_argument('--clean_labels', action='store_true', help='existing project/name ok, do not increment')
     parser.add_argument('--half', action='store_true', help='use FP16 half-precision inference')
     parser.add_argument('--dnn', action='store_true', help='use OpenCV DNN for ONNX inference')
     opt = parser.parse_args()

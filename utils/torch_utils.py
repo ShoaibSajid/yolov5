@@ -18,10 +18,6 @@ import torch.distributed as dist
 import torch.nn as nn
 import torch.nn.functional as F
 
-<<<<<<< HEAD
-=======
-
->>>>>>> 62858da9056771474f60f94f927afa9be0f3e5e1
 try:
     from utils.general import LOGGER
 except:
