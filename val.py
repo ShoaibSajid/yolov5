@@ -251,21 +251,21 @@ def run(data,
 
         # Metrics
         for si, pred in enumerate(out):
-            
+
             labels = targets[targets[:, 0] == si, 1:]
 
             total_boxes+=len(pred) #my variables
             total_gt+=len(labels) #my variables
+            
+            clean_labels_gt=True
+            if clean_labels_gt:  gt_discarded,  gt_cleaned, labels = clean_gt(labels)
+            if clean_labels_gt: total_discarded_gt+=gt_discarded
+            if clean_labels_gt: total_clean_gt+=gt_cleaned
 
             nl = len(labels)
             tcls = labels[:, 0].tolist() if nl else []  # target class
             path, shape = Path(paths[si]), shapes[si][0]
             seen += 1
-
-            if len(pred) == 0:
-                if nl:
-                    stats.append((torch.zeros(0, niou, dtype=torch.bool), torch.Tensor(), torch.Tensor(), tcls))
-                continue
 
             # Predictions
             if single_cls:
@@ -279,9 +279,10 @@ def run(data,
             if clean_labels: total_discarded+=discarded
             if clean_labels: total_clean+=cleaned
 
-            if clean_labels:  gt_discarded,  gt_cleaned, gt_labels = clean_gt(labels)
-            if clean_labels: total_discarded_gt+=gt_discarded
-            if clean_labels: total_clean_gt+=gt_cleaned
+            if len(predn) == 0:
+                if nl:
+                    stats.append((torch.zeros(0, niou, dtype=torch.bool), torch.Tensor(), torch.Tensor(), tcls))
+                continue
 
             # Evaluate
             if nl:
@@ -293,6 +294,12 @@ def run(data,
                     confusion_matrix.process_batch(predn, labelsn)
             else:
                 correct = torch.zeros(predn.shape[0], niou, dtype=torch.bool)
+
+            if not predn.shape[1]==pred.shape[1]:
+                print(f"{predn.shape}")
+                print("Pred shape unstable. Exiting")
+                break
+            
             # stats.append((correct.cpu(), pred[:, 4].cpu(), pred[:, 5].cpu(), tcls))  # (correct, conf, pcls, tcls) Change this line
             stats.append((correct.cpu(), predn[:, 4].cpu(), predn[:, 5].cpu(), tcls))  # (correct, conf, pcls, tcls)
 
@@ -369,7 +376,7 @@ def run(data,
 
 
     LOGGER.info(f"Total Ground Truth Boxes         : {total_gt}")
-    if clean_labels: LOGGER.info(f"Total Ground Truth boxes discard by cleaning: {total_discarded_gt}")
+    if clean_labels_gt: LOGGER.info(f"Total Ground Truth boxes discard by cleaning: {total_discarded_gt}")
 
     LOGGER.info(f"Total Predicted Boxes            : {total_boxes}")
     if clean_labels: LOGGER.info(f"Total Prediction boxes discarded by cleaning: {total_discarded}")
