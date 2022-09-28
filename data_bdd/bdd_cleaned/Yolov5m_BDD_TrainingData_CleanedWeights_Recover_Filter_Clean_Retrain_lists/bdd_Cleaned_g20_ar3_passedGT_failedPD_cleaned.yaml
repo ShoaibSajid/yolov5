@@ -1,0 +1,61 @@
+# YOLOv5 🚀 by Ultralytics, GPL-3.0 license
+# COCO 2017 dataset http://cocodataset.org by Microsoft
+# Example usage: python train.py --data coco.yaml
+# parent
+# ├── yolov5
+# └── datasets
+#     └── coco  ← downloads here
+
+
+# Train/val/test sets as 1) dir: path/to/imgs, 2) file: path/to/imgs.txt, or 3) list: [path/to/imgs1, path/to/imgs2, ..]
+path:   /home/shoaib/datasets/BDD/BDD_100k_Cleaned_g20_ar3 # dataset root dir
+train:  /home/shoaib/codes/Yolov5_DeepSORT_PseudoLabels/yolov5/data_bdd/bdd_cleaned/Yolov5m_BDD_TrainingData_CleanedWeights_Recover_Filter_Clean_Retrain_lists/passed_GT_failed_PD.txt
+val:    /home/shoaib/datasets/BDD/BDD_100k_Cleaned_g20_ar3/val_list.txt
+test:   /home/shoaib/datasets/BDD/BDD_100k_Cleaned_g20_ar3/val_list.txt
+
+# Classes
+nc: 13  # number of classes
+names: ["car","bus","truck","motorcycle","bicycle","trailer","train","rider","pedestrian","traffic light","traffic sign","other vehicle","other person"]  # class names
+
+
+# # Download script/URL (optional)
+# download: |
+#   from utils.general import download, Path
+
+#   # Download labels
+#   segments = False  # segment or box labels
+#   dir = Path(yaml['path'])  # dataset root dir
+#   url = 'https://github.com/ultralytics/yolov5/releases/download/v1.0/'
+#   urls = [url + ('coco2017labels-segments.zip' if segments else 'coco2017labels.zip')]  # labels
+#   download(urls, dir=dir.parent)
+
+#   # Download data
+#   urls = ['http://images.cocodataset.org/zips/train2017.zip',  # 19G, 118k images
+#           'http://images.cocodataset.org/zips/val2017.zip',  # 1G, 5k images
+#           'http://images.cocodataset.org/zips/test2017.zip']  # 7G, 41k images (optional)
+#   download(urls, dir=dir / 'images', threads=3)
+
+
+
+
+
+# python train.py \
+# --batch-size 64 \
+# --data data_bdd/bdd_cleaned/bdd_Cleaned_g20_ar3_with_cleaned_val.yaml \
+# --cfg models/yolov5m.yaml \
+# --device 1 \
+# --name  Shoaib/BDD/BDD_Exp8_Yolov5m_Cleaned_data/Yolov5m_Retrain_using_BDD_Cleaned_g20_ar3 \
+# --weights runs/train/Shoaib/BDD/BDD_Exp8_Yolov5m_Cleaned_data/Yolov5m_Train_BDD_Cleaned_g20_ar3/weights/best.pt  \
+# --epochs 500 \
+# --exist-ok --cache
+
+
+# python train.py \
+# --batch-size 64 \
+# --data data_bdd/bdd_cleaned/Yolov5m_BDD_TrainingData_CleanedWeights_Filter_lists/bdd_Cleaned_g20_ar3_passedGT_failedPD.yaml \
+# --cfg models/yolov5m.yaml \
+# --device 1 \
+# --name  Shoaib/BDD/BDD_Exp8_Yolov5m_Cleaned_data/Yolov5m_Retrain_using_BDD_Cleaned_g20_ar3_goodGT_failedPD \
+# --weights runs/train/Shoaib/BDD/BDD_Exp8_Yolov5m_Cleaned_data/Yolov5m_Train_BDD_Cleaned_g20_ar3/weights/best.pt  \
+# --epochs 500 \
+# --exist-ok --cache
