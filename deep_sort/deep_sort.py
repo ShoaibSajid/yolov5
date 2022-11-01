@@ -1,6 +1,7 @@
 import numpy as np
 import torch
 import sys
+import gdown
 from os.path import exists as file_exists, join
 import warnings
 warnings.filterwarnings("ignore")
@@ -10,7 +11,7 @@ from .sort.tracker import Tracker
 from .deep.reid_model_factory import show_downloadeable_models, get_model_link, is_model_in_factory, \
     is_model_type_in_model_path, get_model_type, show_supported_models
 
-sys.path.append('deep_sort/deep/reid')
+sys.path.append('Yolov5_DeepSORT_PseudoLabels/yolov5/deep_sort/deep/reid')
 from torchreid.utils import FeatureExtractor
 from torchreid.utils.tools import download_url
 
@@ -24,7 +25,7 @@ class DeepSort(object):
         # models trained on: market1501, dukemtmcreid and msmt17
         if is_model_in_factory(model):
             # download the model
-            model_path = join('deep_sort/deep/checkpoint', model + '.pth')
+            model_path = join('Yolov5_DeepSORT_PseudoLabels/yolov5/deep_sort/deep/checkpoint', model + '.pth')
             if not file_exists(model_path):
                 gdown.download(get_model_link(model), model_path, quiet=False)
 
@@ -190,10 +191,14 @@ class DeepSort(object):
         im_crops = []
         for box in bbox_xywh:
             x1, y1, x2, y2 = self._xywh_to_xyxy(box)
+            # im = ori_img[x1:x2, y1:y2]
             im = ori_img[y1:y2, x1:x2]
             im_crops.append(im)
         if im_crops:
-            features = self.extractor(im_crops)
+            try:
+                features = self.extractor(im_crops)
+            except:
+                print('Some error')
         else:
             features = np.array([])
         return features
