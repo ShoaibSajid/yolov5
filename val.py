@@ -257,7 +257,7 @@ def run(data,
             total_boxes+=len(pred) #my variables
             total_gt+=len(labels) #my variables
             
-            clean_labels_gt=True
+            clean_labels_gt=clean_labels
             if clean_labels_gt:  gt_discarded,  gt_cleaned, labels = clean_gt(labels)
             if clean_labels_gt: total_discarded_gt+=gt_discarded
             if clean_labels_gt: total_clean_gt+=gt_cleaned
